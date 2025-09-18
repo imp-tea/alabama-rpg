@@ -14,7 +14,29 @@ export function createKeyboard() {
 
   const down = new Set();
 
+  let enabled = true;
+  
+  // Treat events as "typing" when coming from form fields or contentEditable.
+  // Also check the activeElement for robustness (some browsers may have window as the event target).
+  function isTypingTarget(target) {
+    const el = /** @type {any} */ (target);
+    const active = /** @type {any} */ (document.activeElement);
+    const isEditable = (n) => {
+      if (!n) return false;
+      const tag = (n.tagName || '').toUpperCase?.() || '';
+      return tag === 'INPUT' || tag === 'TEXTAREA' || n.isContentEditable === true;
+    };
+    return isEditable(el) || isEditable(active);
+  }
+  
   const onKeyDown = (e) => {
+    // If globally disabled (e.g., console open), ignore and don't block text input.
+    if (!enabled) return;
+
+    // If typing into an input/textarea/contentEditable, do not capture or block defaults.
+    if (isTypingTarget(e.target)) {
+      return;
+    }
     if (tracked.has(e.code)) {
       down.add(e.code);
       e.preventDefault();
@@ -22,15 +44,38 @@ export function createKeyboard() {
   };
 
   const onKeyUp = (e) => {
+    // If globally disabled, ignore and don't block text input.
+    if (!enabled) return;
+
+    // While typing, ensure any previously latched movement key is released,
+    // but do not prevent default so text input receives the key.
+    if (isTypingTarget(e.target)) {
+      if (tracked.has(e.code)) {
+        down.delete(e.code);
+      }
+      return;
+    }
     if (tracked.has(e.code)) {
       down.delete(e.code);
       e.preventDefault();
     }
   };
 
-  // Attach listeners
-  window.addEventListener('keydown', onKeyDown, { passive: false });
-  window.addEventListener('keyup', onKeyUp, { passive: false });
+  // Listener management (detach completely while console is open to avoid any interference)
+  let listening = false;
+  function addListeners() {
+    if (listening) return;
+    window.addEventListener('keydown', onKeyDown, { passive: false });
+    window.addEventListener('keyup', onKeyUp, { passive: false });
+    listening = true;
+  }
+  function removeListeners() {
+    if (!listening) return;
+    window.removeEventListener('keydown', onKeyDown);
+    window.removeEventListener('keyup', onKeyUp);
+    listening = false;
+  }
+  addListeners();
 
   function isDown(code) {
     return down.has(code);
@@ -50,14 +95,26 @@ export function createKeyboard() {
   }
 
   function destroy() {
-    window.removeEventListener('keydown', onKeyDown);
-    window.removeEventListener('keyup', onKeyUp);
+    removeListeners();
+    down.clear();
+  }
+
+  function clear() {
     down.clear();
   }
 
   return {
     isDown,
     axis,
+    clear,
+    setEnabled: (v) => {
+      const next = !!v;
+      if (next === enabled) return;
+      enabled = next;
+      if (enabled) addListeners();
+      else removeListeners();
+    },
+    isEnabled: () => enabled,
     destroy
   };
 }

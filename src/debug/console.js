@@ -24,6 +24,7 @@ export class DebugConsole {
 
     // Input handlers
     if (this.input) {
+      // Submit/close keys
       this.input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           const v = this.input.value;
@@ -33,6 +34,37 @@ export class DebugConsole {
           this.toggle(false);
         }
       });
+
+      // Guarantee WASD characters type in the console input even if some upstream
+      // listener cancels defaults; also isolate them from gameplay/global handlers.
+      this.input.addEventListener('keydown', (e) => {
+        // Only handle plain key presses (no ctrl/meta/alt)
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+        const code = e.code || '';
+        if (/^Key[WASD]$/.test(code)) {
+          if (e.defaultPrevented) {
+            // Default was canceled upstream; manually insert the character.
+            const t = this.input;
+            const ch = (typeof e.key === 'string' && e.key.length === 1)
+              ? e.key
+              : (code === 'KeyW' ? (e.shiftKey ? 'W' : 'w')
+              :  code === 'KeyA' ? (e.shiftKey ? 'A' : 'a')
+              :  code === 'KeyS' ? (e.shiftKey ? 'S' : 's')
+              :                    (e.shiftKey ? 'D' : 'd'));
+
+            const start = t.selectionStart ?? t.value.length;
+            const end = t.selectionEnd ?? t.value.length;
+            t.value = t.value.slice(0, start) + ch + t.value.slice(end);
+            const pos = start + ch.length;
+            try { t.setSelectionRange(pos, pos); } catch {}
+            if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+          } else {
+            // Allow default insertion but keep it from reaching gameplay/global handlers.
+            e.stopPropagation();
+          }
+        }
+      }, { capture: true });
     }
   }
 
@@ -61,6 +93,14 @@ export class DebugConsole {
       this.panel.classList.remove('show');
       if (this.input) this.input.blur();
     }
+    // Notify listeners (e.g., gameplay input) about open/close state
+    try {
+      window.dispatchEvent(new CustomEvent('debugconsole:toggle', { detail: { open: this._open } }));
+    } catch {}
+  }
+
+  isOpen() {
+    return !!this._open;
   }
 
   log(line) {

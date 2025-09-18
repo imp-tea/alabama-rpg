@@ -8,13 +8,14 @@ import { Player } from './entity/player.js';
 import { makeSeed, randomSeed, toUint32 } from './utils/prng.js';
 import { tryLoadBiomesFromCSV, classifyAxes } from './world/biomes.js';
 
-// Debug modules
+/* Debug modules */
 import { DebugConsole } from './debug/console.js';
 import { createCommandRegistry } from './debug/registry.js';
 import { createCommandContext } from './debug/context.js';
 import helpCmd from './debug/commands/help.js';
 import tpCmd from './debug/commands/tp.js';
 import tileCmd from './debug/commands/tile.js';
+import findBiomeCmd from './debug/commands/findbiome.js';
 
 // DOM refs
 const canvas = document.getElementById('game');
@@ -91,7 +92,13 @@ function frame(now) {
   if (dt > MAX_DT) dt = MAX_DT;
 
   // Update
-  const axis = kb.axis();
+  let axis = kb.axis();
+
+  // When debug console is open, freeze player movement (ignore game input)
+  if (debugConsole && typeof debugConsole.isOpen === 'function' && debugConsole.isOpen()) {
+    axis = { x: 0, y: 0 };
+  }
+
   player.update(dt, axis);
   camera.follow(player.x, player.y);
 
@@ -124,6 +131,23 @@ window.addEventListener('beforeunload', () => {
 const debugConsole = new DebugConsole();
 const registry = createCommandRegistry();
 
+// Clear any latched movement when the debug input gains/loses focus
+{
+ const debugInputEl = document.getElementById('debug-input');
+ if (debugInputEl) {
+   const clearKeys = () => { if (kb && typeof kb.clear === 'function') kb.clear(); };
+   debugInputEl.addEventListener('focus', clearKeys);
+   debugInputEl.addEventListener('blur', clearKeys);
+ }
+}
+
+// Sync keyboard enable/disable with console visibility (and clear latched keys)
+window.addEventListener('debugconsole:toggle', (ev) => {
+ const open = !!(ev && ev.detail && ev.detail.open);
+ if (typeof kb.setEnabled === 'function') kb.setEnabled(!open);
+ if (typeof kb.clear === 'function') kb.clear();
+});
+
 // Build command context
 const ctx = createCommandContext({
   player, camera, world, noise, renderer,
@@ -134,13 +158,19 @@ const ctx = createCommandContext({
 registry
   .register(helpCmd)
   .register(tpCmd)
-  .register(tileCmd);
+  .register(tileCmd)
+  .register(findBiomeCmd);
 
 // Toggle with Backquote
 window.addEventListener('keydown', (e) => {
   if (e.code === 'Backquote') {
     e.preventDefault();
     debugConsole.toggle();
+    const isOpen = debugConsole && typeof debugConsole.isOpen === 'function' ? debugConsole.isOpen() : false;
+    // Enable/disable game keyboard handler in lockstep with console state
+    if (typeof kb.setEnabled === 'function') kb.setEnabled(!isOpen);
+    // Clear any latched movement to avoid sticky input regardless of state
+    if (typeof kb.clear === 'function') kb.clear();
   }
 });
 
@@ -157,3 +187,36 @@ debugConsole.onLine((line) => registry.execute(line, ctx));
   last = performance.now();
   requestAnimationFrame(frame);
 })();
+// Ensure WASD always type in the debug console input by isolating from gameplay/global handlers.
+// If any upstream listener already canceled the event, manually insert the character here.
+// This runs in the capture phase so bubbling handlers cannot interfere.
+document.addEventListener('keydown', (e) => {
+  const active = /** @type {HTMLElement} */ (document.activeElement);
+  const isConsoleOpen = (typeof debugConsole?.isOpen === 'function') ? debugConsole.isOpen() : false;
+  const isInDebugInput = !!active && active.id === 'debug-input';
+  if (!isConsoleOpen || !isInDebugInput) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  const code = e.code || '';
+  if (!/^Key[WASD]$/.test(code)) return;
+
+  // If default already canceled, manually insert the character into the input.
+  const inputEl = /** @type {HTMLInputElement} */ (active);
+  if (e.defaultPrevented) {
+    const ch = (typeof e.key === 'string' && e.key.length === 1)
+      ? e.key
+      : (code === 'KeyW' ? (e.shiftKey ? 'W' : 'w')
+      :  code === 'KeyA' ? (e.shiftKey ? 'A' : 'a')
+      :  code === 'KeyS' ? (e.shiftKey ? 'S' : 's')
+      :                    (e.shiftKey ? 'D' : 'd'));
+    const start = inputEl.selectionStart ?? inputEl.value.length;
+    const end = inputEl.selectionEnd ?? inputEl.value.length;
+    inputEl.value = inputEl.value.slice(0, start) + ch + inputEl.value.slice(end);
+    const pos = start + ch.length;
+    try { inputEl.setSelectionRange(pos, pos); } catch {}
+  }
+
+  // Prevent any other listeners from seeing the event (but do NOT preventDefault).
+  if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+  else e.stopPropagation();
+}, { capture: true });
