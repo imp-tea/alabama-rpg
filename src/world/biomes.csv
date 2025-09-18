@@ -1,0 +1,15 @@
+id,label,real_world_anchor,temp,moist,elev,rough,sal,fert,fire
+1,Appalachian Highlands Forest,Talladega/Cheaha uplands,0.45,0.55,0.85,0.75,0.00,0.50,0.20
+2,Sandstone Canyon & Falls,Sipsey-style gorges & waterfalls,0.50,0.70,0.60,0.80,0.00,0.60,0.10
+3,Karst Plateau & Caves,Interior/Cumberland Plateau karst,0.50,0.55,0.55,0.55,0.00,0.60,0.00
+4,Ridge-and-Valley Mixed Woods,Appalachian ridge/valley belts,0.50,0.55,0.65,0.70,0.00,0.50,0.10
+5,Longleaf Pine Savanna,Fire-maintained longleaf/wiregrass,0.70,0.55,0.35,0.30,0.00,0.45,0.90
+6,Pine Flatwoods,Coastal Plain flatwoods,0.75,0.60,0.25,0.20,0.00,0.40,0.50
+7,Pitcher-Plant Seepage Bogs,Gulf Coastal Plain seepage bogs,0.80,0.95,0.20,0.15,0.00,0.10,0.60
+8,Black Belt Prairie,Chalk/limestone prairie arc,0.65,0.50,0.30,0.25,0.00,0.85,0.20
+9,Bottomland Hardwood & Swamp,Major-river floodplains & sloughs,0.70,0.90,0.20,0.20,0.00,0.70,0.05
+10,Shoal Rivers & Rocky Riffles,Fall-line bedrock shoals,0.60,0.80,0.35,0.50,0.00,0.60,0.05
+11,Mobile–Tensaw Delta,Large deltaic swamp/bayous,0.85,1.00,0.05,0.15,0.10,0.60,0.05
+12,Tidal Salt Marsh & Estuary,Brackish marsh margins,0.90,1.00,0.05,0.10,0.60,0.50,0.00
+13,Coastal Dune & Beach,Barrier-island dune/beach systems,0.95,0.60,0.05,0.25,1.00,0.15,0.00
+14,Maritime Forest & Scrub,Back-dune oak/pine thickets,0.90,0.70,0.08,0.20,0.40,0.40,0.00

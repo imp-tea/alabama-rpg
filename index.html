@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tile World Starter</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #0e0f13;
+      color: #e6e6e6;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+    }
+    #game {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      background: #0e0f13;
+    }
+    #hud {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      padding: 6px 8px;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.4;
+      pointer-events: none;
+      user-select: none;
+      z-index: 10;
+    }
+    #hud .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }
+    a, a:visited { color: #8ecbff; }
+    /* Debug console */
+    #debug-panel {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      border-top: 1px solid rgba(255,255,255,0.1);
+      color: #e6e6e6;
+      z-index: 100;
+      display: none;
+    }
+    #debug-panel.show { display: block; }
+    #debug-output {
+      max-height: 25vh;
+      overflow: auto;
+      padding: 8px;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+      font-size: 12px;
+    }
+    .debug-input-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px 8px 8px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .debug-input-row .prompt {
+      color: #8ecbff;
+      font-weight: 600;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    }
+    #debug-input {
+      flex: 1;
+      background: transparent;
+      color: #e6e6e6;
+      border: none;
+      outline: none;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" aria-label="Game canvas">Your browser does not support Canvas.</canvas>
+  <div id="hud">Seed: <span id="seed-out">-</span><br/>FPS: <span id="fps-out">-</span><br/>Biome: <span id="biome-out">-</span><br/>XY: <span id="pos-out" class="mono">0,0</span> px<br/>Tile: <span id="tile-out" class="mono">0,0</span></div>
+  <div id="debug-panel" class="debug-panel">
+    <div id="debug-output" aria-live="polite"></div>
+    <div class="debug-input-row">
+      <span class="prompt">></span>
+      <input id="debug-input" type="text" spellcheck="false" autocomplete="off" placeholder="Type 'help' — toggle with ` (backquote), 'tp 100 -500', 'tile'"/>
+    </div>
+  </div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
