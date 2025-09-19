@@ -16,6 +16,7 @@ import helpCmd from './debug/commands/help.js';
 import tpCmd from './debug/commands/tp.js';
 import tileCmd from './debug/commands/tile.js';
 import findBiomeCmd from './debug/commands/findbiome.js';
+import viewCmd from './debug/commands/view.js';
 
 // DOM refs
 const canvas = document.getElementById('game');
@@ -159,7 +160,8 @@ registry
   .register(helpCmd)
   .register(tpCmd)
   .register(tileCmd)
-  .register(findBiomeCmd);
+  .register(findBiomeCmd)
+  .register(viewCmd);
 
 // Toggle with Backquote
 window.addEventListener('keydown', (e) => {

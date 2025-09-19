@@ -10,7 +10,7 @@ export const VIEW_CHUNK_MARGIN = 1;
 // Extended noise parameters for environmental axes
 export const NOISE_PARAMS = {
   elevation: { octaves: 5, frequency: 1 / 96,  lacunarity: 2.0, gain: 0.5 },
-  moisture:  { octaves: 4, frequency: 1 / 128, lacunarity: 2.0, gain: 0.5 },
+  moisture:  { octaves: 4, frequency: 1 / 64, lacunarity: 2.0, gain: 0.5 },
   temperature: { octaves: 4, frequency: 1 / 256, lacunarity: 2.0, gain: 0.55 },
   roughness:   { octaves: 3, frequency: 1 / 32,  lacunarity: 2.5, gain: 0.6 },
   salinity:    { octaves: 3, frequency: 1 / 384, lacunarity: 2.0, gain: 0.5 },

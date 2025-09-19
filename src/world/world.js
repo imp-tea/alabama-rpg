@@ -3,16 +3,25 @@ import { generateChunkCanvas, chunkWorldOriginPx } from './chunk.js';
 import { chunkKey } from './chunk.js';
 
 /**
+ * Available render view modes for chunks.
+ * - 'biomes' uses biome classification colors
+ * - Others render a single axis in grayscale: 0 (black) .. 1 (white)
+ */
+export const VIEW_MODES = new Set(['biomes', 'temp', 'moist', 'elev', 'rough', 'sal', 'fert', 'fire']);
+
+/**
  * World manager: caches chunk canvases and computes visible ranges.
  */
 export class World {
   /**
-   * @param {{elevation:(x:number,y:number)=>number, moisture:(x:number,y:number)=>number}} noise
+   * @param {{elevation?:(x:number,y:number)=>number, moisture?:(x:number,y:number)=>number, sampleAxes?:(x:number,y:number)=>{temp:number,moist:number,elev:number,rough:number,sal:number,fert:number,fire:number}}} noise
    */
   constructor(noise) {
     this.noise = noise;
     /** @type {Map<string, HTMLCanvasElement>} */
     this.chunks = new Map();
+    /** @type {'biomes'|'temp'|'moist'|'elev'|'rough'|'sal'|'fert'|'fire'} */
+    this.viewMode = 'biomes';
   }
 
   /**
@@ -25,10 +34,40 @@ export class World {
     const key = chunkKey(cx, cy);
     let canvas = this.chunks.get(key);
     if (!canvas) {
-      canvas = generateChunkCanvas(cx, cy, this.noise);
+      canvas = generateChunkCanvas(cx, cy, this.noise, this.viewMode);
       this.chunks.set(key, canvas);
     }
     return canvas;
+  }
+
+  /**
+   * Clear all cached chunk canvases (forces regeneration on next render).
+   */
+  clearChunks() {
+    this.chunks.clear();
+  }
+
+  /**
+   * Set the current rendering view mode ('biomes' or a single axis).
+   * Clears cached chunks when changed to force regeneration.
+   * @param {'biomes'|'temp'|'moist'|'elev'|'rough'|'sal'|'fert'|'fire'} mode
+   */
+  setViewMode(mode) {
+    const m = String(mode || '').toLowerCase();
+    if (!VIEW_MODES.has(m)) {
+      throw new Error(`Invalid view mode: ${mode}. Valid: ${Array.from(VIEW_MODES).join(', ')}`);
+    }
+    if (m !== this.viewMode) {
+      this.viewMode = m;
+      this.clearChunks();
+    }
+  }
+
+  /**
+   * Get the current rendering view mode.
+   */
+  getViewMode() {
+    return this.viewMode;
   }
 
   /**
